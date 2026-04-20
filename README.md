@@ -87,6 +87,24 @@ The **Secure Biometric Voting System (SBVS)** is a next-generation voting panel 
     node server.js
     ```
 
+## 🌐 Mobile & External Testing (ngrok)
+
+Since Biometric Authentication (WebAuthn) requires **HTTPS**, testing on a real mobile device or outside your local network requires a secure tunnel.
+
+1.  **Start ngrok** (in a separate terminal):
+    ```bash
+    ngrok http 3000
+    ```
+
+2.  **Get Public URL**:
+    You can check the ngrok dashboard or run our helper script:
+    ```bash
+    node scratch/get_ngrok_url.js
+    ```
+
+3.  **Access on Phone**:
+    Open the `https://...` URL provided by ngrok on your mobile browser to test Fingerprint/FaceID voting!
+
 ## 🖥️ Usage
 
 ### For Voters
