@@ -91,9 +91,19 @@ The **Secure Biometric Voting System (SBVS)** is a next-generation voting panel 
 
 Since Biometric Authentication (WebAuthn) requires **HTTPS**, testing on a real mobile device or outside your local network requires a secure tunnel.
 
+### First-Time ngrok Setup 
+If you have never used ngrok before:
+1.  **Sign up** for a free account at [ngrok.com](https://ngrok.com/).
+2.  Copy your **Authtoken** from the ngrok dashboard.
+3.  Run the following command once:
+    ```bash
+    npx ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
+    ```
+
+### Starting the Tunnel
 1.  **Start ngrok** (in a separate terminal):
     ```bash
-    ngrok http 3000
+    npx ngrok http 3000
     ```
 
 2.  **Get Public URL**:
