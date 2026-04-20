@@ -74,9 +74,12 @@ The **Secure Biometric Voting System (SBVS)** is a next-generation voting panel 
     ```
 
 4.  **Initialize Database**
-    Run the provided SQL schema in your MySQL instance:
+    > [!IMPORTANT]
+    > **Make sure XAMPP/MySQL is running first!**
+
+    You can initialize the database and all required tables with a single command:
     ```bash
-    mysql -u root -p < schema.sql
+    node scratch/setup_db.js
     ```
 
 5.  **Run Locally**
