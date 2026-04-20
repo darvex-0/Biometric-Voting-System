@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBVS | Secure Biometric Voting System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #1a1c2c, #0d0e14);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            border-color: rgba(96, 165, 250, 0.4);
+            box-shadow: 0 15px 45px -10px rgba(96, 165, 250, 0.2);
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight glow-text">SBVS</h1>
+                <p class="text-xs text-blue-400 font-semibold uppercase tracking-widest">Secure Biometric Voting</p>
+            </div>
+        </div>
+        <div id="user-display" class="hidden glass px-4 py-2 rounded-xl flex items-center gap-3 border-blue-500/30">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span id="authenticated-user" class="text-sm font-medium"></span>
+            <button onclick="logout()" class="text-blue-400 hover:text-white transition-colors ml-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto">
+        <!-- Auth Section -->
+        <section id="auth-section" class="max-w-md mx-auto mt-12">
+            <div class="glass p-8 rounded-3xl">
+                <h2 class="text-3xl font-bold mb-2">Welcome</h2>
+                <p class="text-gray-400 mb-8">Enter your identity to proceed with biometric authentication.</p>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Voter ID / Roll Number</label>
+                        <input type="text" id="username-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-lg" placeholder="e.g. 2024CS001">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="handleAuth('login')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95">Login</button>
+                        <button onclick="handleAuth('register')" class="bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all border border-white/10 active:scale-95">Register</button>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex items-center gap-4 text-xs text-gray-500">
+                    <div class="flex-grow h-px bg-white/10"></div>
+                    <span>PASSWORDLESS SECURITY</span>
+                    <div class="flex-grow h-px bg-white/10"></div>
+                </div>
+            </div>
+            <p class="text-center mt-6 text-sm text-gray-500">Only authorized devices can cast a ballot.</p>
+        </section>
+
+        <!-- Voting Section -->
+        <section id="voting-section" class="hidden">
+            <div class="mb-12 text-center">
+                <h2 class="text-4xl font-bold mb-4">Cast Your Ballot</h2>
+                <p class="text-gray-400 max-w-lg mx-auto italic">"Your vote represents the future. Select your representative securely and anonymously."</p>
+            </div>
+
+            <div id="candidates-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Candidates will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Final Success Message -->
+        <section id="success-section" class="hidden max-w-md mx-auto text-center py-20">
+            <div class="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(34,197,94,0.2)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold mb-4">Vote Recorded Successfully!</h2>
+            <p class="text-gray-400 mb-10 leading-relaxed">Your encrypted ballot has been safely deposited in the digital vault. Thank you for participating in the democratic process.</p>
+            <button onclick="location.reload()" class="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-8 rounded-xl transition-all border border-white/10">Back to Home</button>
+        </section>
+    </main>
+
+    <!-- UI Overlay for Loading/Biometrics -->
+    <div id="biometric-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="text-center">
+            <div class="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <h3 class="text-xl font-bold text-white mb-2" id="overlay-title">Authenticating</h3>
+            <p class="text-blue-400" id="overlay-text">Please provide your biometric credential...</p>
+            <p class="text-sm text-gray-500 mt-4">(Check your device for the prompt)</p>
+        </div>
+    </div>
+
+    <!-- Alert Toast -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 glass border-red-500/50 px-6 py-4 rounded-xl text-white font-medium transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

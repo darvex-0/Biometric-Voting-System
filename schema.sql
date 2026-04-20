@@ -1,0 +1,22 @@
+CREATE DATABASE IF NOT EXISTS voting_system;
+
+USE voting_system;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    public_key TEXT NOT NULL,
+    has_voted BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS candidates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    party_logo_url VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    encrypted_ballot TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

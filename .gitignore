@@ -1,0 +1,12 @@
+# Dependency directories
+node_modules/
+
+# Environment variables (Keep your database secrets safe!)
+.env
+
+# Optional: Ignore Mac system files if you ever switch computers
+.DS_Store
+
+# Optional: Ignore XAMPP database exports if you save them here
+*.sql
+!schema.sql

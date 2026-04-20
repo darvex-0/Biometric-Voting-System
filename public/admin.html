@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBVS | Secure Admin Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top left, #1a1c2c, #08090d);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+        .glow-text {
+            text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.4)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight glow-text text-red-500">ADMIN VAULT</h1>
+                <p class="text-xs text-red-400 font-bold uppercase tracking-widest">End-to-End Encrypted Tally</p>
+            </div>
+        </div>
+        <div class="glass px-6 py-3 rounded-xl flex items-center gap-3 border-red-500/30">
+            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,1)]"></div>
+            <span class="text-sm font-bold tracking-widest text-red-400">LIVE CONNECTION</span>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Top Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="glass rounded-3xl p-8 border-l-4 border-l-blue-500">
+                <p class="text-gray-400 font-semibold uppercase tracking-widest mb-2">Total Registered Voters</p>
+                <h2 id="stat-registered" class="text-5xl font-bold">0</h2>
+            </div>
+            <div class="glass rounded-3xl p-8 border-l-4 border-l-green-500">
+                <p class="text-gray-400 font-semibold uppercase tracking-widest mb-2">Total Ballots Cast</p>
+                <h2 id="stat-votes" class="text-5xl font-bold text-green-400">0</h2>
+            </div>
+            <div class="glass rounded-3xl p-8 border-l-4 border-l-purple-500">
+                <p class="text-gray-400 font-semibold uppercase tracking-widest mb-2">Add New Candidate</p>
+                <form id="addCandidateForm" class="flex flex-col gap-3 mt-2">
+                    <input type="text" id="candidateName" placeholder="Candidate Name" required class="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors">
+                    <input type="url" id="candidateLogo" placeholder="Logo URL (Optional)" class="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg transition-colors border border-purple-400/50 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                        Add Candidate
+                    </button>
+                    <p id="candidateMessage" class="text-xs text-center hidden"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Live Results Chart -->
+            <div class="glass rounded-3xl p-8 flex flex-col">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                    Live Election Results
+                </h2>
+                <div class="flex-grow w-full rounded-xl bg-black/20 p-4 border border-white/5 flex items-center justify-center min-h-[300px]">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Encrypted Blockchain Log -->
+            <div class="glass rounded-3xl p-8 flex flex-col max-h-[500px]">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Raw Ballot Decryption
+                </h2>
+                <p class="text-sm text-gray-400 mb-4 italic">Simulating client-side decoding of the Database's encrypted E2EE payload.</p>
+                <div id="vote-log" class="flex-grow w-full bg-black/40 rounded-xl border border-white/5 p-4 overflow-y-auto space-y-3 font-mono text-xs">
+                    <!-- Logs injection here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="admin.js"></script>
+</body>
+</html>
