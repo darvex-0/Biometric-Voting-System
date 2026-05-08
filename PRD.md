@@ -1,107 +1,104 @@
 # Product Requirements Document (PRD)
-## Project Name: Secure Biometric Voting System (SBVS)
-**Document Version:** 1.0
-**Target Environment:** Local testing (XAMPP/Node) scaling to Zero-Cost Cloud Hosting.
+## Project Name: Device-Bound Passwordless Voting System (DBPVS)
+**Document Version:** 2.0 (Pro Enterprise Architecture)
+**Target Environment:** Local testing (Node/MySQL) scaling to Cloud Hosting.
 
 ---
 
 ### 1. Project Overview
-The Secure Biometric Voting System is a modern, web-based polling application designed to guarantee voter authenticity and ballot anonymity. It leverages device-native biometric sensors (fingerprint/FaceID) for login and End-to-End Encryption (E2EE) for ballot casting, ensuring a high-security standard without requiring proprietary hardware.
+The Device-Bound Passwordless Voting System is a high-security, multi-election management platform. It solves standard digital voting vulnerabilities by replacing passwords with **WebAuthn Cryptographic Hardware Binding** and implementing **End-to-End Encryption (E2EE)**. This "Pro" version introduces a strict Supervised Kiosk registration model to prevent Sybil attacks and a decoupled database architecture to support concurrent, rule-based elections.
 
-### 2. Objectives
-* **High-Assurance Authentication:** Eliminate password-based vulnerabilities using passwordless WebAuthn.
-* **Absolute Anonymity:** Ensure a voter's identity cannot be cryptographically or relationally linked to their cast ballot.
-* **High Efficiency:** Handle concurrent voting connections reliably.
-* **Cost Efficiency:** Utilize 100% free, open-source tools and generous free-tier hosting.
+### 2. Core Objectives
+* **Sybil Attack Prevention:** Enforce a strict "Supervised Kiosk" registration flow to guarantee the physical identity of the voter before cryptographic binding occurs.
+* **Multi-Election Lifecycle:** Support the simultaneous running of multiple elections, dynamically serving ballots based on voter metadata (Course, Year, Section).
+* **Ballot Anonymity & E2EE:** Ensure a voter's identity cannot be relationally linked to their cast ballot, encrypting the payload client-side before transmission.
+* **Resilience & Recovery:** Provide a secure Admin protocol for device revocation in the event of lost or damaged voter hardware.
 
 ---
 
-### 3. Technology Stack ("The Efficiency Stack")
-* **Backend Runtime:** Node.js (v22.20.0)
-* **Web Framework:** Express.js
-* **Database:** MySQL (via XAMPP for local development)
-* **Database Driver:** `mysql2` (utilized with Connection Pooling and async/await)
+### 3. Technology Stack
+* **Backend Runtime:** Node.js (v22.20.0) / Express.js
+* **Database:** MySQL (Relational, ACID Compliant)
+* **Database Driver:** `mysql2` (Connection Pooling & Async/Await)
 * **Biometric API:** WebAuthn (`@simplewebauthn/server` & `@simplewebauthn/browser`)
-* **Cryptography (E2EE):** Web Crypto API (Frontend) / Node native `crypto` (Backend)
-* **Frontend UI:** HTML5, Vanilla JavaScript, and Tailwind CSS (via CDN)
+* **Cryptography:** Web Crypto API (Frontend) / Node native `crypto`
+* **Frontend:** HTML5, Vanilla JavaScript, Tailwind CSS
 
 ---
 
-### 4. Core Features & Requirements
+### 4. Core Features & System Workflows
 
-#### A. Voter Registration & Authentication
-* The system must prompt users to register their device's native fingerprint/biometric sensor.
-* Passwords will not be stored; the database will only store the WebAuthn Public Key.
-* The system must prevent duplicate voting (one vote per registered biometric key).
+#### A. The "Supervised Kiosk" Registration Flow
+To prevent identity hijacking, voters cannot self-register from home.
+1. **Pre-population:** Admin adds students via manual entry or CSV upload (Roll Number, Name, Course, Year, Section).
+2. **Physical Verification:** The student presents their physical College ID to the Admin at a designated kiosk.
+3. **Admin Unlock:** The Admin searches the Roll Number in the dashboard and clicks "Unlock Registration."
+4. **Hardware Binding:** The student scans their device's native biometric sensor at the kiosk to generate and store the WebAuthn Public Key. `is_registered` becomes `TRUE`.
 
-#### B. The Voting Process (Anonymity & E2EE)
-* The user selects a candidate on the frontend.
-* The frontend uses a public election key to encrypt the vote *before* it leaves the browser (E2EE).
-* The backend verifies the user's biometric signature, marks them as `has_voted = TRUE`, and deposits the encrypted vote payload into a disconnected database table.
+#### B. Election Management & Eligibility (Pro Architecture)
+* Admins can create isolated elections with eligibility rules (Course, Year, Section).
+* A `NULL` value in a rule field means "open to all."
+* The backend verifies the user's metadata against the election rules *before* serving the ballot.
 
-#### C. Real-Time Security
-* Prepared SQL statements must be used exclusively to prevent SQL Injection.
-* The system must mandate HTTPS/SSL for the WebAuthn API to function.
+#### C. Device Dead / Account Recovery
+* If a voter's device is destroyed, their Private Key is permanently lost.
+* The voter undergoes physical verification again at the Admin kiosk.
+* The Admin uses the "Revoke Device" tool to wipe the old `public_key` and reset `is_registered` to `FALSE`, allowing re-registration on a new device.
+
+#### D. The E2EE Voting Process
+* The voter selects a candidate. The frontend encrypts the choice using a Public Election Key.
+* The backend verifies the WebAuthn signature and Eligibility Rules.
+* The backend records the participation in a `voter_participation` table to prevent double voting.
+* The backend deposits the encrypted payload into the disconnected `votes` table — **which has no roll_number column**.
 
 ---
 
-### 5. System Architecture & Database Schema
-The database architecture is intentionally decoupled to prevent mapping a user to a specific ballot.
+### 5. Advanced Database Schema (Multi-Election)
 
-**Table 1: `users` (Identity Provider)**
-Handles authentication and prevents double-voting.
-* `id` (INT, Primary Key)
-* `username` (VARCHAR, Unique identifier/Roll Number)
-* `public_key` (TEXT, WebAuthn biometric key)
-* `has_voted` (BOOLEAN, Default: FALSE)
+**Table 1: `users` (The Voter Roll)**
+* `roll_number` (VARCHAR, Primary Key)
+* `name` (VARCHAR)
+* `course` (VARCHAR)
+* `year` (INT)
+* `section` (VARCHAR)
+* `public_key` (TEXT, Nullable until registered)
+* `credential_id` (TEXT, Nullable)
+* `is_registered` (BOOLEAN, Default: FALSE)
+* `registration_unlocked` (BOOLEAN, Default: FALSE)
 
-**Table 2: `candidates` (Election Data)**
+**Table 2: `elections` (The Rule Engine)**
 * `id` (INT, Primary Key)
+* `title` (VARCHAR)
+* `allowed_course` (VARCHAR, NULL = open to all)
+* `allowed_year` (INT, NULL = open to all)
+* `allowed_section` (VARCHAR, NULL = open to all)
+* `status` (ENUM: 'Upcoming', 'Active', 'Closed')
+
+**Table 3: `candidates`**
+* `id` (INT, Primary Key)
+* `election_id` (INT, Foreign Key → elections.id)
 * `name` (VARCHAR)
 * `party_logo_url` (VARCHAR)
 
-**Table 3: `votes` (The Ballot Box)**
-Stores the encrypted payload. No foreign keys to the `users` table exist here.
+**Table 4: `voter_participation` (The Double-Vote Preventer)**
+* `roll_number` (VARCHAR, FK → users.roll_number)
+* `election_id` (INT, FK → elections.id)
+* `voted_at` (TIMESTAMP)
+* *(Composite Primary Key of roll_number + election_id)*
+
+**Table 5: `votes` (The Anonymous Ballot Box)**
 * `id` (INT, Primary Key)
-* `encrypted_ballot` (TEXT, The E2EE payload)
-* `created_at` (TIMESTAMP)
+* `election_id` (INT, FK → elections.id)
+* `encrypted_ballot` (TEXT)
+* `cast_at` (TIMESTAMP)
+* **No roll_number exists in this table.**
 
 ---
 
-### 6. Implementation Plan (Milestones)
+### 6. Implementation Milestones
 
-#### Phase 1: Local Environment Setup (Days 1-2)
-1. Initialize Node.js project (`npm init -y`).
-2. Install dependencies: `express`, `mysql2`, `dotenv`, `@simplewebauthn/server`.
-3. Set up XAMPP, start Apache/MySQL, and create the `voting_system` database using the schema above.
-4. Create `db.js` to establish the `mysql2` connection pool.
-
-#### Phase 2: Biometric Authentication Flow (Days 3-7)
-1. Build frontend UI with Tailwind for login/registration.
-2. Create API endpoint `/generate-registration-options` to send a WebAuthn challenge to the browser.
-3. Create API endpoint `/verify-registration` to validate the fingerprint and store the `public_key` in MySQL.
-4. Repeat the process for the login flow (Authentication challenge).
-
-#### Phase 3: The Voting Logic & E2EE (Days 8-12)
-1. Create the Candidate Selection UI.
-2. Implement `window.crypto` on the frontend to encrypt the selected candidate ID.
-3. Create API endpoint `/cast-vote`.
-4. Logic check in `/cast-vote`:
-    * Is user authenticated? (Check session/token).
-    * Is `has_voted == FALSE`?
-    * If yes: Update `users` table to `has_voted = TRUE`.
-    * Insert `encrypted_ballot` into `votes` table.
-
-#### Phase 4: Finalization & Deployment (Days 13-15)
-1. Build a simple admin dashboard (protected route) to count decrypted votes.
-2. Test concurrency by simulating multiple local votes.
-3. Migrate the XAMPP database to a free cloud MySQL provider (e.g., Aiven or Railway).
-4. Deploy the Node.js backend to a free tier host (e.g., Render) ensuring HTTPS is active for WebAuthn.
-
----
-
-### 7. Future Enhancements (Post-Submission)
-* **Live Results Dashboard:** Implement Server-Sent Events (SSE) to show vote counts updating in real-time.
-* **Audit Trail:** Generate a unique receipt hash for users to verify their vote was counted without revealing who they voted for.
-
----
+* **Phase 1 ✅ Pro-Schema Integration:** Rebuild database to support multi-elections and voter metadata.
+* **Phase 2: Admin Kiosk Console:** UI & backend routes for student roll management, unlock, revoke, election creation.
+* **Phase 3: Hardware Binding:** WebAuthn tied to Roll Number flow with Admin-unlock gate.
+* **Phase 4: Eligibility & Voting:** Backend eligibility checking + E2EE vote submission with `election_id`.
+* **Phase 5: Decryption & Tally:** Per-election admin decryption, results chart and ballot log.

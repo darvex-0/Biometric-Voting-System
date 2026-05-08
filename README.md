@@ -2,7 +2,7 @@
   <img src="https://img.icons8.com/fluency/96/fingerprint.png" alt="SBVS Logo" width="80" />
   <h1 align="center">SBVS | Secure Biometric Voting System</h1>
   <p align="center">
-    <strong>An End-to-End Encrypted (E2EE) voting platform secured by WebAuthn Biometrics.</strong>
+    <strong>A biometric voting platform with application-layer ballot encryption and WebAuthn authentication.</strong>
   </p>
   
   <p align="center">
@@ -17,7 +17,7 @@
 
 ## 🛡️ Overview
 
-The **Secure Biometric Voting System (SBVS)** is a next-generation voting panel designed to eliminate electoral fraud through hardware-backed biometric verification. By leveraging the **WebAuthn API**, SBVS ensures that only real, authenticated users can cast a ballot, while **End-to-End Encryption (E2EE)** protects the integrity and privacy of every single vote.
+The **Secure Biometric Voting System (SBVS)** is a next-generation voting panel designed to eliminate electoral fraud through hardware-backed biometric verification. By leveraging the **WebAuthn API**, SBVS ensures that only real, authenticated users can cast a ballot, while **public-key ballot encryption** protects vote payloads in transit and at rest.
 
 ## ✨ Key Features
 
@@ -64,14 +64,29 @@ The **Secure Biometric Voting System (SBVS)** is a next-generation voting panel 
     ```
 
 3.  **Configure Environment**
-    Create a `.env` file in the root directory:
+    Copy `.env.example` to `.env` and update the values for your machine:
     ```env
-    DB_HOST=localhost
+    DB_HOST=127.0.0.1
     DB_USER=root
     DB_PASSWORD=your_password
     DB_NAME=voting_system
     PORT=3000
+    SESSION_SECRET=replace-with-a-long-random-secret
+    ADMIN_USERNAME=admin
+    ADMIN_PASSWORD=change-me
+    NODE_ENV=development
+    SESSION_COOKIE_SECURE=false
+    SESSION_COOKIE_SAME_SITE=lax
+    TRUST_PROXY=false
+    BALLOT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+    BALLOT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
     ```
+
+    Notes:
+    - `SESSION_SECRET` is required for production and should be long and random.
+    - Set `SESSION_COOKIE_SECURE=true`, `SESSION_COOKIE_SAME_SITE=none`, and `TRUST_PROXY=true` when deploying behind HTTPS/reverse proxies.
+    - The admin dashboard now requires `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
+    - Generate ballot encryption keys with `node scratch/generate_ballot_keys.js`.
 
 4.  **Initialize Database**
     > [!IMPORTANT]
@@ -125,9 +140,10 @@ If you have never used ngrok before:
 
 ### For Admins
 1.  Navigate to `http://localhost:3000/admin.html`.
-2.  Monitor **Total Registered vs. Ballots Cast**.
-3.  View the **Live Results** chart.
-4.  Use the **Add New Candidate** form to expand the election participants list.
+2.  Sign in with the admin credentials from `.env`.
+3.  Monitor **Total Registered vs. Ballots Cast**.
+4.  View the **Live Results** chart.
+5.  Use the **Add New Candidate** form to expand the election participants list.
 
 <hr />
 

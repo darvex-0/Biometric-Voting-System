@@ -3,60 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBVS | Secure Biometric Voting System</title>
+    <title>DBPVS | Secure Biometric Voting</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at top right, #1a1c2c, #0d0e14);
-            color: #e2e8f0;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-        }
-        .glow-text {
-            text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
-        }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            border-color: rgba(96, 165, 250, 0.4);
-            box-shadow: 0 15px 45px -10px rgba(96, 165, 250, 0.2);
-        }
-        .animate-pulse-slow {
-            animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .7; }
-        }
+        body { font-family: 'Outfit', sans-serif; background: radial-gradient(ellipse at top right, #0d1117, #0a0c1a, #08090d); color: #e2e8f0; min-height: 100vh; overflow-x: hidden; }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.8); }
+        .glow-blue { text-shadow: 0 0 15px rgba(96,165,250,0.6); }
+        .card-hover { transition: all 0.3s; }
+        .card-hover:hover { transform: translateY(-6px); border-color: rgba(96,165,250,0.4); box-shadow: 0 20px 50px -12px rgba(59,130,246,0.25); }
+        input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; border-radius: 0.85rem; padding: 0.85rem 1rem; width: 100%; transition: border-color 0.2s; font-family: 'Outfit', sans-serif; }
+        input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        input::placeholder { color: #4b5563; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <!-- Header -->
     <header class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-        <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.5)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
             </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight glow-text">SBVS</h1>
-                <p class="text-xs text-blue-400 font-semibold uppercase tracking-widest">Secure Biometric Voting</p>
+                <h1 class="text-2xl font-black tracking-tight glow-blue text-blue-300">DBPVS</h1>
+                <p class="text-xs text-blue-500 font-bold uppercase tracking-widest">Device-Bound Biometric Voting</p>
             </div>
         </div>
-        <div id="user-display" class="hidden glass px-4 py-2 rounded-xl flex items-center gap-3 border-blue-500/30">
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span id="authenticated-user" class="text-sm font-medium"></span>
-            <button onclick="logout()" class="text-blue-400 hover:text-white transition-colors ml-4">
+        <div id="user-display" class="hidden glass px-5 py-2.5 rounded-xl flex items-center gap-3 border-blue-500/30">
+            <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,1)]"></div>
+            <span id="authenticated-user" class="text-sm font-semibold"></span>
+            <button onclick="logout()" class="ml-3 text-blue-400 hover:text-white transition-colors" title="Logout">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
                 </svg>
@@ -65,71 +46,151 @@
     </header>
 
     <main class="max-w-6xl mx-auto">
-        <!-- Auth Section -->
-        <section id="auth-section" class="max-w-md mx-auto mt-12">
+
+        <!-- Section 1: Login -->
+        <section id="auth-section" class="max-w-md mx-auto mt-8">
             <div class="glass p-8 rounded-3xl">
-                <h2 class="text-3xl font-bold mb-2">Welcome</h2>
-                <p class="text-gray-400 mb-8">Enter your identity to proceed with biometric authentication.</p>
-                
-                <div class="space-y-6">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-black mb-2">Voter Login</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed">Enter your Roll Number to authenticate with your device's biometric sensor.</p>
+                </div>
+
+                <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-2">Voter ID / Roll Number</label>
-                        <input type="text" id="username-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-lg" placeholder="e.g. 2024CS001">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Roll Number</label>
+                        <input type="text" id="roll-number-input" placeholder="e.g. BCA2024001" autocomplete="off">
                     </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <button onclick="handleAuth('login')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95">Login</button>
-                        <button onclick="handleAuth('register')" class="bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all border border-white/10 active:scale-95">Register</button>
-                    </div>
+                    <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-700/30 active:scale-95">
+                        Authenticate with Biometrics
+                    </button>
                 </div>
 
-                <div class="mt-8 flex items-center gap-4 text-xs text-gray-500">
-                    <div class="flex-grow h-px bg-white/10"></div>
-                    <span>PASSWORDLESS SECURITY</span>
-                    <div class="flex-grow h-px bg-white/10"></div>
+                <div class="mt-8 pt-6 border-t border-white/5 text-center">
+                    <p class="text-xs text-gray-600">Not registered yet? Visit the Admin Kiosk with your College ID.</p>
                 </div>
             </div>
-            <p class="text-center mt-6 text-sm text-gray-500">Only authorized devices can cast a ballot.</p>
+            
+            <!-- Kiosk Registration Notice -->
+            <div id="kiosk-register-panel" class="hidden mt-4 glass p-5 rounded-2xl border border-yellow-500/30">
+                <p class="text-yellow-400 text-sm font-semibold mb-2">🔓 Kiosk Registration Unlocked</p>
+                <p class="text-gray-400 text-xs mb-4">Your roll number has been unlocked by an Admin. Complete biometric binding now.</p>
+                <button onclick="handleKioskRegister()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-xl transition-all active:scale-95">
+                    Register My Biometrics
+                </button>
+            </div>
         </section>
 
-        <!-- Voting Section -->
+        <!-- Section 2: Election Selector -->
+        <section id="elections-section" class="hidden max-w-5xl mx-auto">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-black mb-3">Your Eligible Elections</h2>
+                <p class="text-gray-500">Select an election you are eligible to vote in.</p>
+            </div>
+            <div id="elections-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- Section 3: Candidate Ballot -->
         <section id="voting-section" class="hidden">
-            <div class="mb-12 text-center">
-                <h2 class="text-4xl font-bold mb-4">Cast Your Ballot</h2>
-                <p class="text-gray-400 max-w-lg mx-auto italic">"Your vote represents the future. Select your representative securely and anonymously."</p>
-            </div>
-
-            <div id="candidates-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Candidates will be loaded here -->
+            <div class="max-w-6xl mx-auto">
+                <div class="mb-10 flex items-center gap-4">
+                    <button onclick="backToElections()" class="glass p-2 rounded-xl hover:bg-white/10 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
+                    <div>
+                        <h2 class="text-3xl font-black">Cast Your Ballot</h2>
+                        <p id="voting-election-title" class="text-gray-500 text-sm mt-0.5"></p>
+                    </div>
+                </div>
+                <div id="candidates-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Populated by JS -->
+                </div>
             </div>
         </section>
 
-        <!-- Final Success Message -->
-        <section id="success-section" class="hidden max-w-md mx-auto text-center py-20">
-            <div class="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(34,197,94,0.2)]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        <!-- Section 4: Public Results View -->
+        <section id="public-results-section" class="hidden max-w-4xl mx-auto">
+            <div class="mb-10 flex items-center gap-4">
+                <button onclick="backToElections()" class="glass p-2 rounded-xl hover:bg-white/10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </button>
+                <div>
+                    <h2 class="text-3xl font-black">Election Results</h2>
+                    <p id="results-election-title" class="text-gray-500 text-sm mt-0.5"></p>
+                    <p id="public-results-meta" class="text-gray-400 text-xs mt-1"></p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass p-8 rounded-3xl flex items-center justify-center min-h-[350px]">
+                    <canvas id="publicResultsChart"></canvas>
+                </div>
+                <div class="glass p-8 rounded-3xl">
+                    <h3 class="font-bold text-xl mb-4">Nominee Standings</h3>
+                    <div id="public-results-list" class="space-y-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Success -->
+        <section id="success-section" class="hidden max-w-md mx-auto text-center py-16">
+            <div class="w-24 h-24 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_60px_rgba(34,197,94,0.2)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <h2 class="text-3xl font-bold mb-4">Vote Recorded Successfully!</h2>
-            <p class="text-gray-400 mb-10 leading-relaxed">Your encrypted ballot has been safely deposited in the digital vault. Thank you for participating in the democratic process.</p>
-            <button onclick="location.reload()" class="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-8 rounded-xl transition-all border border-white/10">Back to Home</button>
+            <h2 class="text-3xl font-black mb-4 text-green-400">Ballot Secured!</h2>
+            <p class="text-gray-400 mb-4 leading-relaxed">Your encrypted ballot has been anonymously deposited in the digital vault.</p>
+            <p class="text-xs text-gray-600 mb-10">Your identity cannot be linked to this vote — Anonymity Guaranteed.</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="backToElections()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition-all">Vote in Another Election</button>
+                <button onclick="logout()" class="bg-white/5 hover:bg-white/10 text-white font-bold py-3 px-6 rounded-xl transition-all border border-white/10">Logout</button>
+            </div>
         </section>
+
+        <section id="results-section" class="hidden max-w-4xl mx-auto">
+            <div class="mb-10 flex items-center gap-4">
+                <button onclick="backToElections()" class="glass p-2 rounded-xl hover:bg-white/10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </button>
+                <div>
+                    <h2 class="text-3xl font-black">Election Results</h2>
+                    <p id="results-election-title" class="text-gray-500 text-sm mt-0.5"></p>
+                </div>
+            </div>
+            <div class="glass rounded-3xl p-8">
+                <div class="flex items-center justify-between gap-4 mb-6">
+                    <p id="results-meta" class="text-sm text-gray-400"></p>
+                </div>
+                <div id="results-list" class="space-y-4">
+                    <p class="text-gray-500">Loading results...</p>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <!-- UI Overlay for Loading/Biometrics -->
-    <div id="biometric-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <!-- Biometric Overlay -->
+    <div id="biometric-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
         <div class="text-center">
             <div class="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
             <h3 class="text-xl font-bold text-white mb-2" id="overlay-title">Authenticating</h3>
-            <p class="text-blue-400" id="overlay-text">Please provide your biometric credential...</p>
-            <p class="text-sm text-gray-500 mt-4">(Check your device for the prompt)</p>
+            <p class="text-blue-400" id="overlay-text">Waiting for biometric confirmation...</p>
+            <p class="text-xs text-gray-600 mt-4">Check your device for the fingerprint / FaceID prompt.</p>
         </div>
     </div>
 
-    <!-- Alert Toast -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 glass border-red-500/50 px-6 py-4 rounded-xl text-white font-medium transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-3">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 glass border border-red-500/30 px-6 py-4 rounded-xl text-white font-medium transform translate-y-32 opacity-0 transition-all duration-500 flex items-center gap-3 z-50 max-w-sm w-full mx-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
         </svg>
         <span id="toast-message"></span>
